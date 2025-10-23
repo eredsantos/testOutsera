@@ -61,6 +61,10 @@ npm run test:ui
 
 ### Testes de API (Backend)
 
+**IMPORTANTE**:
+Para os testes de API, foram validados **apenas** os endpoints da controller de **Produtos**.
+
+
 Executa apenas os testes de API:
 
 ```bash
