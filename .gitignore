@@ -9,7 +9,17 @@
 *.user
 *.userosscache
 *.sln.docstates
-*.env
+
+# Test automation specific
+node_modules/
+.env.local
+allure-results/
+allure-report/
+test-results/
+playwright-report/
+playwright/.cache/
+reports/
+*.log
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
