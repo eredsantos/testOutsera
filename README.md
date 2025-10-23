@@ -47,7 +47,6 @@ npx playwright install
 ```env
 HEADLESS=false          # true para executar sem interface gráfica
 SLOW_MO=0              # Adiciona delay entre ações (em ms)
-SCREENSHOT=only-on-failure
 ```
 
 ## 🧪 Executando os Testes
