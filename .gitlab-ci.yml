@@ -1,0 +1,87 @@
+image: mcr.microsoft.com/playwright:v1.40.0-focal
+
+stages:
+  - install
+  - test
+  - report
+  - deploy
+
+variables:
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+  PLAYWRIGHT_BROWSERS_PATH: "$CI_PROJECT_DIR/ms-playwright"
+
+cache:
+  paths:
+    - .npm/
+    - node_modules/
+    - ms-playwright/
+
+install_dependencies:
+  stage: install
+  script:
+    - npm ci
+    - npx playwright install --with-deps chromium
+  artifacts:
+    paths:
+      - node_modules/
+      - ms-playwright/
+    expire_in: 1 day
+
+test_api:
+  stage: test
+  needs: 
+    - install_dependencies
+  script:
+    - npm run test:api
+  artifacts:
+    when: always
+    paths:
+      - allure-results/
+      - reports/
+    expire_in: 30 days
+  allow_failure: false
+
+test_ui:
+  stage: test
+  needs:
+    - install_dependencies
+  script:
+    - npm run test:ui
+  artifacts:
+    when: always
+    paths:
+      - allure-results/
+      - test-results/
+      - reports/
+    expire_in: 30 days
+  allow_failure: false
+
+generate_report:
+  stage: report
+  needs:
+    - test_api
+    - test_ui
+  when: always
+  script:
+    - npm run report:generate
+  artifacts:
+    when: always
+    paths:
+      - allure-report/
+    expire_in: 30 days
+
+pages:
+  stage: deploy
+  needs:
+    - generate_report
+  when: always
+  script:
+    - mkdir -p public
+    - cp -r allure-report/* public/
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  only:
+    - main
+    - master

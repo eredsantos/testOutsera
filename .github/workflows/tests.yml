@@ -1,0 +1,74 @@
+name: Testes Automatizados
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+
+jobs:
+  test:
+    name: Executar Testes
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+      
+      - name: Configurar Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Instalar dependencias
+        run: npm ci
+      
+      - name: Instalar navegadores do Playwright
+        run: npx playwright install --with-deps chromium
+      
+      - name: Executar testes de API
+        run: npm run test:api
+        continue-on-error: false
+      
+      - name: Executar testes de UI
+        run: npm run test:ui
+        continue-on-error: false
+      
+      - name: Gerar relatorio Allure
+        if: always()
+        run: npm run report:generate
+      
+      - name: Upload dos resultados Allure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-${{ matrix.node-version }}
+          path: allure-results/
+          retention-days: 30
+      
+      - name: Upload do relatorio Allure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-${{ matrix.node-version }}
+          path: allure-report/
+          retention-days: 30
+      
+      - name: Upload de screenshots em caso de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ matrix.node-version }}
+          path: test-results/screenshots/
+          retention-days: 7
