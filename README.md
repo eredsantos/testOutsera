@@ -18,12 +18,14 @@ Na solução do teste proposto foi solicitado realizar testes de **checkout**, e
 - **[Axios](https://axios-http.com/)** - Cliente HTTP para testes de API
 - **[Allure](https://allurereport.org/)** - Framework para geração de relatórios de testes
 - **[Joi](https://joi.dev/)** - Validação de schemas JSON
+- **[k6](https://k6.io/)** - Ferramenta de testes de carga e performance
 - **Node.js** - Ambiente de execução JavaScript
 
 ## 📋 Pré-requisitos
 
 - Node.js (versão 16 ou superior)
 - npm
+- k6 (apenas para testes de performance) - [Instruções de instalação](https://k6.io/docs/getting-started/installation/)
 
 ## 🔧 Configuração Local
 
@@ -89,6 +91,17 @@ npm run test:smoke
 npm run test:regression
 ```
 
+### Testes de Performance (k6)
+
+Executa testes de carga no endpoint `GET /headers` da API httpbin.org com 500 usuários simultâneos:
+
+```bash
+# Teste de carga completo (500 VUs por 5 minutos)
+npm run test:load
+```
+
+Para mais detalhes sobre testes de performance, consulte: **[docs/PERFORMANCE-TESTING.md](docs/PERFORMANCE-TESTING.md)**
+
 ## 📊 Relatórios
 
 ### Gerar Relatório Allure
@@ -127,14 +140,23 @@ npm run clean:reports
 
 ```
 testOutsera/
+├── .github/
+│   └── workflows/        # Workflows CI/CD
+│       ├── tests.yml     # Testes funcionais
+│       └── performance-tests.yml  # Testes de carga
 ├── src/
 │   ├── features/         # Arquivos .feature com cenários BDD
 │   │   ├── api/          # Cenários de testes de API
 │   │   └── ui/           # Cenários de testes de UI
 │   ├── step_definitions/ # Implementação dos steps
-│   └── support/          # Arquivos de suporte e configuração
+│   ├── support/          # Arquivos de suporte e configuração
+│   └── performance/      # Testes de carga (k6)
+│       ├── scripts/      # Scripts de teste k6
+│       ├── utils/        # Utilitários para execução
+│       └── reports/      # Relatórios de performance
 ├── docs/                 # Documentação do projeto
-│   └── CI-CD.md         # Guia de configuração de CI/CD
+│   ├── CI-CD.md         # Guia de configuração de CI/CD
+│   └── PERFORMANCE-TESTING.md  # Guia de testes de performance
 ├── reports/             # Relatórios Cucumber (HTML/JSON)
 ├── allure-results/      # Resultados para o Allure
 ├── allure-report/       # Relatório Allure gerado
