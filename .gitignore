@@ -21,6 +21,12 @@ playwright/.cache/
 reports/
 *.log
 
+# Performance test reports
+src/performance/reports/*.html
+src/performance/reports/*.json
+src/performance/reports/*.txt
+!src/performance/reports/.gitkeep
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
