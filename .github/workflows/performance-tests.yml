@@ -1,0 +1,92 @@
+name: Performance Tests - k6
+
+on:
+  workflow_dispatch:
+    inputs:
+      vus:
+        description: 'Número de usuários virtuais'
+        required: false
+        default: '500'
+      duration:
+        description: 'Duração do teste (ex: 5m, 10m)'
+        required: false
+        default: '5m'
+
+jobs:
+  load-test:
+    name: Teste de Carga
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout do código
+        uses: actions/checkout@v4
+      
+      - name: 📦 Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      
+      - name: 📚 Instalar dependências npm
+        run: npm ci
+      
+      - name: 🚀 Instalar k6
+        run: |
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+      
+      - name: ✅ Verificar instalação do k6
+        run: k6 version
+      
+      - name: 📝 Criar arquivo .env
+        run: |
+          cat > .env << EOF
+          LOAD_TEST_BASE_URL=${{ secrets.LOAD_TEST_BASE_URL || 'https://httpbin.org' }}
+          LOAD_TEST_ENDPOINT=${{ secrets.LOAD_TEST_ENDPOINT || '/headers' }}
+          LOAD_TEST_VUS=${{ github.event.inputs.vus || secrets.LOAD_TEST_VUS || '500' }}
+          LOAD_TEST_DURATION=${{ github.event.inputs.duration || secrets.LOAD_TEST_DURATION || '5m' }}
+          EOF
+      
+      - name: 🧪 Executar teste de carga
+        run: npm run test:load
+        continue-on-error: true
+      
+      - name: 📊 Upload dos relatórios HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-performance-reports
+          path: src/performance/reports/*.html
+          retention-days: 30
+      
+      - name: 📄 Upload dos relatórios JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-performance-json
+          path: src/performance/reports/*.json
+          retention-days: 30
+      
+      - name: 📃 Upload dos relatórios TXT
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-performance-txt
+          path: src/performance/reports/*.txt
+          retention-days: 30
+      
+      - name: 📋 Mostrar resumo no console
+        if: always()
+        run: |
+          echo "### 📊 Teste de Performance Concluído" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**VUs:** ${{ github.event.inputs.vus || secrets.LOAD_TEST_VUS || '500' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Duração:** ${{ github.event.inputs.duration || secrets.LOAD_TEST_DURATION || '5m' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f src/performance/reports/*.txt ]; then
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+            cat src/performance/reports/*.txt | head -50 >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi
